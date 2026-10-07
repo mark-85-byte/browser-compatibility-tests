@@ -14,7 +14,7 @@ Upload only this standalone folder's files to a dedicated repository, preserving
 
 In the repository, open Actions, choose **Windows macOS Linux browser audit**, then **Run workflow**. It runs only when manually triggered. Download the three `device-audit-*` artifacts after completion; retention is one day.
 
-GitHub account access is required. This package has been prepared locally; no repository has been created and no cloud job has run yet.
+The approved private repository is `mark-85-byte/browser-compatibility-tests`. Read the status and artifacts of a completed workflow run before claiming OS coverage; committing this package alone does not verify any cloud environment.
 
 ## Cost and scope
 
