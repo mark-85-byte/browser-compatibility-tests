@@ -20,8 +20,10 @@ async def main(args):
                 # A second fresh local page must produce the same sample, without random noise.
                 repeat=await observe_bounded(context,channel=channel,headless=args.headless)
                 result['repeat_sample_stable']=result['environment_id']==repeat['environment_id']
+                result['repeat_observation']=repeat
                 results.append(result)
                 print(f'{channel}: actual host={result["actual_host"]["system"]}; repeat stable={result["repeat_sample_stable"]}',flush=True)
+                print('DIAGNOSTIC_JSON='+json.dumps(result,sort_keys=True),flush=True)
             except Exception as exc:
                 results.append({'channel':channel,'status':'unavailable','error_type':type(exc).__name__})
                 print(f'{channel}: unavailable ({type(exc).__name__})',flush=True)
