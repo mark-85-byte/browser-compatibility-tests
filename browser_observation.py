@@ -6,7 +6,13 @@ import json
 import platform
 
 
-PROBE = r"""() => {
+PROBE = r"""async () => {
+    const fontNames=['Arial','Segoe UI','Calibri','Helvetica','Menlo','DejaVu Sans','Liberation Sans','Noto Sans'];
+    const sampleText='mmmmmmmmlli00Aa';
+    // Resolve native fonts before measurement; the first page may otherwise use a transient fallback.
+    await Promise.all(fontNames.map(font=>document.fonts.load(`24px "${font}", monospace`,sampleText)));
+    await document.fonts.load('18px sans-serif','Browser compatibility: Aa09');
+    await document.fonts.ready;
     const canvas = document.createElement('canvas');
     canvas.width=300; canvas.height=90;
     const ctx=canvas.getContext('2d');
@@ -15,9 +21,9 @@ PROBE = r"""() => {
     ctx.fillText('Browser compatibility: Aa09',8,30);
     ctx.strokeStyle='#728394';ctx.beginPath();ctx.arc(140,60,16,0,Math.PI*2);ctx.stroke();
     const fonts={};
-    for(const font of ['Arial','Segoe UI','Calibri','Helvetica','Menlo','DejaVu Sans','Liberation Sans','Noto Sans']){
+    for(const font of fontNames){
         ctx.font=`24px "${font}", monospace`;
-        fonts[font]=ctx.measureText('mmmmmmmmlli00Aa').width;
+        fonts[font]=ctx.measureText(sampleText).width;
     }
     const gl=document.createElement('canvas').getContext('webgl');
     let graphics=null;
