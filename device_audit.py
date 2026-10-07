@@ -16,10 +16,13 @@ async def main(args):
             try:
                 browser=await playwright.chromium.launch(channel=channel,headless=args.headless)
                 context=await browser.new_context(no_viewport=True)
+                startup=await observe_bounded(context,channel=channel,headless=args.headless)
                 result=await observe_bounded(context,channel=channel,headless=args.headless)
-                # A second fresh local page must produce the same sample, without random noise.
+                # Keep cold-start differences visible; test repeatability after native cache initialization.
                 repeat=await observe_bounded(context,channel=channel,headless=args.headless)
                 result['repeat_sample_stable']=result['environment_id']==repeat['environment_id']
+                result['cold_start_stable']=startup['environment_id']==result['environment_id']
+                result['startup_observation']=startup
                 result['repeat_observation']=repeat
                 results.append(result)
                 print(f'{channel}: actual host={result["actual_host"]["system"]}; repeat stable={result["repeat_sample_stable"]}',flush=True)
