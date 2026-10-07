@@ -1,0 +1,42 @@
+name: Windows macOS Linux browser audit
+
+'on':
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-browser-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Audit ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15, ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install diagnostic dependency
+        run: python -m pip install -r requirements.txt
+      - name: Install Chromium and system dependencies
+        run: python -m playwright install --with-deps chromium
+      - name: Measure actual execution environment
+        run: python device_audit.py --headless --channels chromium --output outputs/device-audit.json
+      - name: Save diagnostic result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: device-audit-${{ matrix.os }}
+          path: outputs/device-audit.json
+          if-no-files-found: error
+          retention-days: 1
