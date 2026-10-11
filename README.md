@@ -1,39 +1,98 @@
-# Windows, macOS and Linux browser baseline
+# Browser Compatibility Diagnostics
 
-This small standalone package runs the same local browser diagnostic on three real execution operating systems using GitHub-hosted virtual machines. It does not need a Mac or Linux machine on your desk.
+A small Python toolkit for measuring browser environments and comparing diagnostic
+reports across Windows, macOS and Linux. It helps answer: **what changed between
+these two browser runs?**
 
-## What it measures
+Status: early-stage developer tooling. The code and documentation were developed
+with AI assistance. There are no verified external adoption or download metrics.
 
-Actual host OS/build/architecture, browser version, reported graphics renderer, canvas sample repeatability, font sample widths, browser preferences and screen/window dimensions. Each result explicitly records headless mode and the execution OS.
+## Features
 
-Cloud hosts can expose software/virtual graphics. These baselines establish execution on the three listed OS environments, not coverage of every physical GPU, font set, wallet extension or trading flow. No simulated GPU/OS values or random canvas noise are injected.
+- Record the actual execution OS, architecture and browser version.
+- Measure reported graphics renderer, canvas repeatability, font sample widths,
+  browser preferences and screen/window dimensions.
+- Keep cold-start and warmed observations separate.
+- Compare reports offline with explicit missing values and optional numeric tolerance.
+- Run a manual GitHub Actions audit on Windows, macOS and Ubuntu hosts.
+- Run offline regression tests without downloading a browser.
 
-## Files and account access
+## Quick start
 
-Upload only this standalone folder's files to a dedicated repository, preserving `.github/workflows/device-audit.yml`. It contains no wallet spreadsheet, private key, CAPTCHA API key, browser cookies, Telegram token or trading code. Keep the existing trading project separate.
+Use Python 3.11 or newer. Create and activate a virtual environment first:
 
-In the repository, open Actions, choose **Windows macOS Linux browser audit**, then **Run workflow**. It runs only when manually triggered. Download the three `device-audit-*` artifacts after completion; retention is one day.
-
-The approved private repository is `mark-85-byte/browser-compatibility-tests`. Read the status and artifacts of a completed workflow run before claiming OS coverage; committing this package alone does not verify any cloud environment.
-
-## Cost and scope
-
-GitHub's standard hosted runners are free on public repositories. Private repositories use the account's included allowance; GitHub Free lists 2,000 minutes/month and 500 MB artifact storage, shared with other account usage. Confirm remaining allowance and keep paid overage blocked before dispatching a private-repository test. The package cannot inspect or enforce your account billing budget by itself.
-
-The workflow uses standard runner labels only, a twelve-minute limit per job, no schedule and one-day retention for a tiny JSON artifact. It is for brief compatibility diagnostics, not persistent hosting or a month-long trading bot.
-
-Official sources:
-
-- https://docs.github.com/en/actions/reference/runners/github-hosted-runners
-- https://docs.github.com/en/billing/concepts/product-billing/github-actions
-- https://playwright.dev/python/docs/emulation
-
-## Local use
-
-With the requirements and Chromium installed:
-
-```
-python device_audit.py --headless --channels chromium --output outputs/device-audit.json
+```powershell
+# Windows PowerShell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-Omit `--headless` for a visible local browser; the measured mode remains explicit. Results from visible and headless browsers are separate configurations.
+```bash
+# Ubuntu / macOS
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies and run the audit:
+
+```bash
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+python device_audit.py --headless --channels chromium --output outputs/baseline.json
+```
+
+On Ubuntu, `python -m playwright install --with-deps chromium` can also install the
+required system libraries. It may require administrator privileges.
+Omit `--headless` for a visible local browser. `--channels chromium,chrome,msedge`
+also checks Chrome and Edge when those browsers are installed locally.
+
+## Compare two reports
+
+```bash
+python compare_reports.py outputs/baseline.json outputs/current.json --output outputs/comparison.json
+python compare_reports.py outputs/baseline.json outputs/current.json --tolerance 0.02
+```
+
+The comparison pairs results by browser channel. OS, browser version, execution
+mode, repeatability and nested measurements remain visible as changed paths.
+Timestamps, derived environment IDs and duplicate cold/warm observation objects
+are excluded from comparison. Numeric tolerance is absolute and does not apply
+to booleans. Duplicate channels and malformed reports are rejected.
+
+Exit codes: **0** for equal measurements, **1** for differences, **2** for invalid
+input or file errors. A difference is a diagnostic finding, not proof of a bug.
+The comparison feature uses only Python's standard library.
+
+## Tests
+
+```bash
+python -m unittest discover -v
+```
+
+Tests use fictional inputs to check nested differences, ordering, missing/null
+values, numeric tolerance, unavailable channels, invalid input and CLI behavior.
+They do not establish browser or physical device coverage.
+
+## GitHub Actions
+
+Open **Actions → Windows macOS Linux browser audit → Run workflow**.
+The workflow runs only on request, uses standard hosted runners, limits each job
+to twelve minutes and retains JSON artifacts for one day. Inspect completed run
+results before claiming coverage. Report comparison tests can also run locally.
+
+## Privacy and limitations
+
+The audit launches fresh browser contexts and probes a blank page. It does not
+visit external sites, load your existing browser profile or collect credentials.
+Reports contain OS/build, renderer, languages, timezone and display measurements;
+review these before sharing. Generated `outputs/` files are excluded from Git.
+Dependency installation and GitHub Actions require network access; the probe and
+offline comparison do not send reports to an external service.
+
+Hosted VMs may expose software graphics. Canvas hashes describe a rendered sample,
+not a unique device identity. Font widths can include fallback fonts. Results from
+headless and visible browsers are different configurations. This toolkit does not
+establish coverage of every GPU, font set, extension or website.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contributions and [LICENSE](LICENSE) for
+the MIT license.
